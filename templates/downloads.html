@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fichiers Téléchargés</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Fichiers dans {{ folder_name }}</h1>
+        <a href="{{ url_for('download_all', folder_name=folder_name) }}" class="button">Télécharger tout le dossier</a>
+        <ul>
+            {% for file in files %}
+            <li>
+                {{ file }}
+                <a href="{{ url_for('download_file', folder_name=folder_name, filename=file) }}" class="button">Télécharger</a>
+            </li>
+            {% endfor %}
+        </ul>
+        <a href="{{ url_for('index') }}" class="button">Retour</a>
+    </div>
+</body>
+</html>
