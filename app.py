@@ -126,6 +126,10 @@ def index():
 def download_file(folder, filename):
     return send_from_directory(os.path.join(UPLOAD_FOLDER, folder), filename, as_attachment=True)
 
+@app.route("/documentation")
+def documentation():
+    return render_template("documentation.html")
+
 # Télécharger tout le dossier en zip
 @app.route("/download-zip/<folder>")
 def download_zip(folder):
