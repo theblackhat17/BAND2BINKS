@@ -6,6 +6,7 @@
     <title>BAND2BINKS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Custom Styles */
         .hidden { display: none; }
         .toast {
             animation: slide-in 0.5s ease forwards, fade-out 0.5s ease forwards 3s;
@@ -18,21 +19,48 @@
             0% { opacity: 1; }
             100% { opacity: 0; }
         }
+        audio { height: 30px; width: 400px; }
+        body.dark { background-color: #1f2937; color: #f9fafb; }
+        body.dark .bg-white { background-color: #374151; color: #1f2937; }
+        body.dark input, body.dark button { background-color: #1f2937; color: #f9fafb; border-color: #4b5563; }
+        body.dark .text-gray-800, body.dark strong { color: #f9fafb; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-100 text-gray-800 transition-all duration-300">
 
-<div class="container mx-auto py-8">
-    <!-- Titre -->
-    <h1 class="text-4xl font-bold text-center mb-6">BAND2BINKS</h1>
+<!-- Menu -->
+<nav class="bg-neutral-900 text-white p-4 mb-6">
+    <div class="container mx-auto flex justify-between">
+        <a href="/" class="text-lg font-bold">BAND2BINKS</a>
+        <ul class="flex space-x-4">
+            <li><a href="/" class="hover:underline">Download Pack</a></li>
+            <li><a href="/documentation" class="hover:underline">Documentation</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container mx-auto py-4">
+    <!-- Header et Thème Toggle -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-4xl font-bold">BAND2BINKS</h1>
+        <label class="flex items-center cursor-pointer">
+            <span class="mr-2 text-sm font-medium">Thème sombre</span>
+            <input type="checkbox" id="theme-toggle" class="hidden">
+            <div class="w-10 h-5 bg-gray-300 rounded-full p-1">
+                <div id="toggle-ball" class="w-4 h-4 bg-white rounded-full shadow-md transform transition duration-300"></div>
+            </div>
+        </label>
+    </div>
 
     <!-- Formulaire -->
-    <form method="post" class="flex justify-center mb-8">
-        <input type="text" name="url" placeholder="Entrez l'URL Bandcamp"
+    <form id="download-form" class="flex justify-center mb-8">
+        <input type="text" id="url" placeholder="Entrez l'URL Bandcamp"
                class="w-3/4 p-3 border rounded-l-lg focus:outline-none">
-        <button type="submit" class="bg-blue-500 text-white px-6 rounded-r-lg hover:bg-blue-600">
+        <button type="submit" class="bg-neutral-900 text-white px-6 rounded-r-lg hover:bg-blue-600">
             Télécharger
         </button>
+        
+        
     </form>
 
     <!-- Notifications Toast -->
@@ -46,7 +74,7 @@
         </div>
     </div>
 
-    <!-- Liste des Dossiers -->
+    <!-- Liste Dynamique des Dossiers -->
     <div id="folders">
         {% for folder, files in folders.items() %}
         <div class="bg-white rounded-lg shadow-lg mb-6">
@@ -56,7 +84,7 @@
                      class="w-12 h-12 rounded-lg mr-4" onerror="this.src='/static/folder.png'">
                 <strong class="text-lg">{{ folder }}</strong>
                 <a href="{{ url_for('download_zip', folder=folder) }}"
-                   class="ml-auto text-sm bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600">Télécharger tout</a>
+                   class="ml-auto text-sm bg-red-700 text-white px-4 py-1 rounded hover:bg-red-900">Télécharger tout</a>
             </div>
             <div id="{{ folder }}" class="hidden px-4 pb-4">
                 <ul class="space-y-2">
@@ -64,10 +92,8 @@
                     {% if file.endswith('.mp3') %}
                     <li class="flex justify-between items-center p-2 bg-gray-50 rounded">
                         <span>{{ file }}</span>
-                        <!-- Player Audio -->
-                        <audio controls class="w-1/2">
+                        <audio controls>
                             <source src="{{ url_for('download_file', folder=folder, filename=file) }}" type="audio/mp3">
-                            Votre navigateur ne supporte pas l'audio.
                         </audio>
                     </li>
                     {% endif %}
@@ -76,13 +102,6 @@
             </div>
         </div>
         {% endfor %}
-    </div>
-
-    <!-- Pagination Bouton -->
-    <div id="pagination" class="text-center mt-8">
-        <button onclick="loadMore()" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
-            Charger plus
-        </button>
     </div>
 </div>
 
@@ -115,20 +134,27 @@
         }, 500);
     }
 
-    // Simuler Progression et Toast après soumission du formulaire
-    document.querySelector("form").addEventListener("submit", (e) => {
-        showToast("Téléchargement en cours...");
-        updateProgress();
+    // Thème Sombre/Clair
+    const themeToggle = document.getElementById("theme-toggle");
+    const body = document.body;
+    themeToggle.addEventListener("change", () => {
+        body.classList.toggle("dark");
+        document.getElementById("toggle-ball").classList.toggle("translate-x-5");
     });
 
-    // Pagination - Simuler le Scroll Infini
-    function loadMore() {
-        const newContent = `
-        <div class="bg-white rounded-lg shadow-lg mb-6 p-4">
-            <p class="text-center text-gray-500">Contenu supplémentaire chargé...</p>
-        </div>`;
-        document.getElementById('folders').insertAdjacentHTML('beforeend', newContent);
-    }
+    // Soumission Formulaire AJAX
+    document.getElementById("download-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const url = document.getElementById("url").value;
+        showToast("Téléchargement en cours...");
+        updateProgress();
+
+        fetch("/", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "url=" + encodeURIComponent(url),
+        }).then(() => location.reload()); // Recharge les dossiers dynamiquement
+    });
 </script>
 </body>
 </html>

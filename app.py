@@ -139,6 +139,7 @@ def download_zip(folder):
         import shutil
         shutil.make_archive(zip_path.replace(".zip", ""), "zip", folder_path)
     return send_from_directory(UPLOAD_FOLDER, f"{folder}.zip", as_attachment=True)
+    
 
 if __name__ == "__main__":
     app.run(debug=True)
