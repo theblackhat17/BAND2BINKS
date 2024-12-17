@@ -1,57 +1,84 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BAND2BINKS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .folder-image { width: 50px; height: 50px; margin-right: 10px; }
-        .toggle-btn { cursor: pointer; color: #007bff; }
-        .hidden { display: none; }
-    </style>
+    <title>BAND2BINKS by TBH</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Script pour le thème sombre -->
+    <script>
+        if (localStorage.theme === "dark" || (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+            document.documentElement.classList.add("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+        }
+    </script>
 </head>
-<body class="bg-light">
-<div class="container py-5">
-    <h1 class="text-center mb-4">BAND2BINKS</h1>
-    <form method="post" class="row g-3 mb-4">
-        <div class="col-md-8">
-            <input type="text" name="url" class="form-control" placeholder="Entrez l'URL Bandcamp" required>
-        </div>
-        <div class="col-md-4">
-            <button type="submit" class="btn btn-primary w-100">Télécharger</button>
-        </div>
-    </form>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
 
-    {% for folder, files in folders.items() %}
-    <div class="card mb-3">
-        <div class="card-header d-flex align-items-center">
-            <span class="toggle-btn" onclick="toggleFolder('{{ folder }}')">▼</span>
-            <img src="/static/downloads/{{ folder }}/cover.jpg" class="folder-image" onerror="this.src='/static/folder.png'">
-            <strong>{{ folder }}</strong>
-            <a href="{{ url_for('download_zip', folder=folder) }}" class="btn btn-success btn-sm ms-auto">Télécharger tout</a>
+    <!-- Conteneur principal -->
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header avec switch de thème -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">BAND2BINKS x TBH</h1>
+            <button id="theme-toggle" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg">
+                🌙 Thème Sombre
+            </button>
         </div>
-        <div id="{{ folder }}" class="card-body hidden">
-            <ul class="list-group">
-                {% for file in files %}
-                {% if file.endswith('.mp3') %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ file }}
-                    <a href="{{ url_for('download_file', folder=folder, filename=file) }}" class="btn btn-outline-primary btn-sm">Télécharger</a>
-                </li>
-                {% endif %}
-                {% endfor %}
-            </ul>
+
+        <!-- Formulaire de téléchargement -->
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 mb-6">
+            <form method="post" class="flex flex-col md:flex-row gap-4">
+                <input type="text" name="url" class="flex-1 px-4 py-2 border dark:border-gray-700 rounded-lg focus:ring focus:ring-indigo-300" placeholder="Entrez l'URL Bandcamp" required>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">Télécharger</button>
+            </form>
         </div>
+
+        <!-- Liste des dossiers -->
+        {% for folder, files in folders.items() %}
+        <div class="bg-gray-100 dark:bg-gray-800 shadow-md rounded-lg mb-6">
+            <!-- En-tête du dossier -->
+            <div class="flex items-center p-4 border-b dark:border-gray-700">
+                <button onclick="toggleFolder('{{ folder }}')" class="text-indigo-500 hover:text-indigo-700 dark:text-indigo-300 mr-2">▼</button>
+                <img src="/static/downloads/{{ folder }}/cover.jpg" onerror="this.src='/static/folder.png'" alt="Cover" class="w-12 h-12 rounded mr-4">
+                <h2 class="text-lg font-semibold">{{ folder }}</h2>
+                <a href="{{ url_for('download_zip', folder=folder) }}" class="ml-auto bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm">
+                    Télécharger tout
+                </a>
+            </div>
+
+            <!-- Liste des fichiers -->
+            <div id="{{ folder }}" class="hidden p-4">
+                <ul>
+                    {% for file in files %}
+                    {% if file.endswith('.mp3') %}
+                    <li class="flex justify-between items-center py-2 border-b dark:border-gray-700">
+                        <span>{{ file }}</span>
+                        <a href="{{ url_for('download_file', folder=folder, filename=file) }}" class="text-blue-500 hover:underline">Télécharger</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
-<script>
-    function toggleFolder(folderId) {
-        const content = document.getElementById(folderId);
-        content.classList.toggle('hidden');
-    }
-</script>
+
+    <!-- Script pour le toggle des dossiers -->
+    <script>
+        function toggleFolder(folderId) {
+            const content = document.getElementById(folderId);
+            content.classList.toggle('hidden');
+        }
+
+        // Thème sombre / clair
+        const themeToggle = document.getElementById("theme-toggle");
+        themeToggle.addEventListener("click", () => {
+            document.documentElement.classList.toggle("dark");
+            localStorage.theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+            themeToggle.textContent = document.documentElement.classList.contains("dark") ? "☀️ Thème Clair" : "🌙 Thème Sombre";
+        });
+    </script>
 </body>
 </html>
