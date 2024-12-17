@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAND2BINKS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .folder-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+        .toggle-btn {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #007bff;
+            margin-right: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+    <h1 class="mb-4 text-center">BAND2BINKS - Téléchargement</h1>
+
+    <!-- Formulaire -->
+    <div class="card shadow mb-4">
+        <div class="card-body text-center">
+            <form method="post" class="row g-3 justify-content-center">
+                <div class="col-md-8">
+                    <input type="text" name="url" class="form-control" placeholder="Entrez l'URL de la page Bandcamp" required>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">Télécharger</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des dossiers -->
+    <div>
+        {% for folder, files in folders.items() %}
+        <div class="card mb-3 shadow">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <!-- Toggle pour replier/déplier le dossier -->
+                    <span class="toggle-btn" onclick="toggleFolder('{{ folder }}')">▼</span>
+                    <!-- Afficher l'image de couverture si elle existe -->
+                    {% set cover_path = 'downloads/' ~ folder ~ '/cover.jpg' %}
+                    {% if 'cover.jpg' in files %}
+                        <img src="{{ url_for('download_file', filename=folder ~ '/cover.jpg') }}" 
+                             alt="cover" class="folder-image">
+                    {% else %}
+                        <img src="/static/folder.png" alt="folder" class="folder-image">
+                    {% endif %}
+                    <strong>{{ folder }}</strong>
+                </div>
+                <!-- Bouton pour télécharger tout le dossier -->
+                <a href="{{ url_for('download_zip', folder=folder) }}" class="btn btn-success btn-sm">
+                    <i class="fa-solid fa-download">ZIP</i>
+                </a>
+            </div>
+            <!-- Liste des fichiers -->
+            <div id="{{ folder }}" class="card-body">
+                <ul class="list-group">
+                    {% for file in files %}
+                        {% if file.endswith(".mp3") %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ file }}
+                                <!-- Bouton de téléchargement individuel -->
+                                <a href="{{ url_for('download_file', filename=folder ~ '/' ~ file) }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fa-solid fa-download">DONWLOAD</i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Script pour le toggle -->
+<script>
+    function toggleFolder(folderId) {
+        const folderContent = document.getElementById(folderId);
+        if (folderContent.classList.contains('hidden')) {
+            folderContent.classList.remove('hidden');
+        } else {
+            folderContent.classList.add('hidden');
+        }
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
