@@ -9,6 +9,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 
 app = Flask(__name__)
 
@@ -16,9 +18,22 @@ app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join("static", "downloads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+def create_chrome_driver():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Mode headless (sans interface graphique)
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.binary_location = "/app/.chrome-for-testing/chrome-linux64/chrome"
+
+    service = Service("/app/.chromedriver/bin/chromedriver")  # Chemin sur Heroku
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    return driver
+
 # Fonction pour générer le JSON
 def generate_json(folder_url, json_path):
-    driver = webdriver.Chrome(options=webdriver.ChromeOptions().add_argument('--headless'))
+    driver = create_chrome_driver()  # Utilise la fonction pour le driver
     driver.get(folder_url)
     try:
         titles_elements = WebDriverWait(driver, 20).until(
@@ -28,13 +43,13 @@ def generate_json(folder_url, json_path):
         with open(json_path, "w", encoding="utf-8") as json_file:
             json.dump(titles, json_file, ensure_ascii=False, indent=4)
     except Exception as e:
-        print(f"Erreur JSON : {e}")
+        print(f"Erreur lors de la génération du JSON : {e}")
     finally:
         driver.quit()
 
 # Fonction pour télécharger la musique
 def download_music(folder_url, folder_name):
-    driver = webdriver.Chrome(options=webdriver.ChromeOptions().add_argument('--headless'))
+    driver = create_chrome_driver()  # Utilise correctement la fonction
     driver.get(folder_url)
     try:
         json_path = os.path.join(UPLOAD_FOLDER, f"{folder_name}.json")
