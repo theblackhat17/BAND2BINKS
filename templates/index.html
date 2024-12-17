@@ -3,66 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BAND2BINKS by TBH</title>
-    <!-- Tailwind CSS -->
+    <title>BAND2BINKS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Script pour le thème sombre -->
-    <script>
-        if (localStorage.theme === "dark" || (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-            document.documentElement.classList.add("dark");
-        } else {
-            document.documentElement.classList.remove("dark");
+    <style>
+        .hidden { display: none; }
+        .toast {
+            animation: slide-in 0.5s ease forwards, fade-out 0.5s ease forwards 3s;
         }
-    </script>
+        @keyframes slide-in {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fade-out {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+<body class="bg-gray-100 text-gray-800">
 
-    <!-- Menu de navigation -->
-    <nav class="bg-indigo-600 dark:bg-gray-800 shadow-lg">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="#" class="text-white text-2xl font-bold">BAND2BINKS by TBH</a>
-            <div class="flex space-x-6">
-                <a href="/" class="text-gray-200 hover:text-white transition">Download Pack</a>
-                <a href="/documentation" class="text-gray-200 hover:text-white transition">Documentation</a>
-            </div>
-            <button id="theme-toggle" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg">
-                🌙 Thème Sombre
-            </button>
+<div class="container mx-auto py-8">
+    <!-- Titre -->
+    <h1 class="text-4xl font-bold text-center mb-6">BAND2BINKS</h1>
+
+    <!-- Formulaire -->
+    <form method="post" class="flex justify-center mb-8">
+        <input type="text" name="url" placeholder="Entrez l'URL Bandcamp"
+               class="w-3/4 p-3 border rounded-l-lg focus:outline-none">
+        <button type="submit" class="bg-blue-500 text-white px-6 rounded-r-lg hover:bg-blue-600">
+            Télécharger
+        </button>
+    </form>
+
+    <!-- Notifications Toast -->
+    <div id="toast" class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg hidden"></div>
+
+    <!-- Barre de Progression -->
+    <div id="progress-container" class="hidden mb-4">
+        <h3 class="text-center font-medium mb-2">Progression du téléchargement</h3>
+        <div class="w-full bg-gray-300 rounded-lg overflow-hidden">
+            <div id="progress-bar" class="h-3 bg-blue-500 transition-all duration-500" style="width: 0%;"></div>
         </div>
-    </nav>
+    </div>
 
-    <!-- Contenu principal -->
-    <div class="container mx-auto px-4 py-6">
-        <!-- Formulaire de téléchargement -->
-        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 mb-6">
-            <h1 class="text-3xl font-bold text-center mb-4">Télécharger vos Packs</h1>
-            <form method="post" class="flex flex-col md:flex-row gap-4">
-                <input type="text" name="url" class="flex-1 px-4 py-2 border dark:border-gray-700 rounded-lg focus:ring focus:ring-indigo-300" placeholder="Entrez l'URL Bandcamp" required>
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">Télécharger</button>
-            </form>
-        </div>
-
-        <!-- Contenu dynamique ici -->
+    <!-- Liste des Dossiers -->
+    <div id="folders">
         {% for folder, files in folders.items() %}
-        <div class="bg-gray-100 dark:bg-gray-800 shadow-md rounded-lg mb-6">
-            <!-- En-tête du dossier -->
-            <div class="flex items-center p-4 border-b dark:border-gray-700">
-                <button onclick="toggleFolder('{{ folder }}')" class="text-indigo-500 hover:text-indigo-700 dark:text-indigo-300 mr-2">▼</button>
-                <img src="/static/downloads/{{ folder }}/cover.jpg" onerror="this.src='/static/folder.png'" alt="Cover" class="w-12 h-12 rounded mr-4">
-                <h2 class="text-lg font-semibold">{{ folder }}</h2>
-                <a href="{{ url_for('download_zip', folder=folder) }}" class="ml-auto bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm">
-                    Télécharger tout
-                </a>
+        <div class="bg-white rounded-lg shadow-lg mb-6">
+            <div class="flex items-center p-4">
+                <span class="cursor-pointer text-blue-500 mr-2" onclick="toggleFolder('{{ folder }}')">▼</span>
+                <img src="/static/downloads/{{ folder }}/cover.jpg" alt="cover"
+                     class="w-12 h-12 rounded-lg mr-4" onerror="this.src='/static/folder.png'">
+                <strong class="text-lg">{{ folder }}</strong>
+                <a href="{{ url_for('download_zip', folder=folder) }}"
+                   class="ml-auto text-sm bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600">Télécharger tout</a>
             </div>
-
-            <!-- Liste des fichiers -->
-            <div id="{{ folder }}" class="hidden p-4">
-                <ul>
+            <div id="{{ folder }}" class="hidden px-4 pb-4">
+                <ul class="space-y-2">
                     {% for file in files %}
                     {% if file.endswith('.mp3') %}
-                    <li class="flex justify-between items-center py-2 border-b dark:border-gray-700">
+                    <li class="flex justify-between items-center p-2 bg-gray-50 rounded">
                         <span>{{ file }}</span>
-                        <a href="{{ url_for('download_file', folder=folder, filename=file) }}" class="text-blue-500 hover:underline">Télécharger</a>
+                        <!-- Player Audio -->
+                        <audio controls class="w-1/2">
+                            <source src="{{ url_for('download_file', folder=folder, filename=file) }}" type="audio/mp3">
+                            Votre navigateur ne supporte pas l'audio.
+                        </audio>
                     </li>
                     {% endif %}
                     {% endfor %}
@@ -72,20 +78,57 @@
         {% endfor %}
     </div>
 
-    <!-- Script pour le toggle des dossiers -->
-    <script>
-        function toggleFolder(folderId) {
-            const content = document.getElementById(folderId);
-            content.classList.toggle('hidden');
-        }
+    <!-- Pagination Bouton -->
+    <div id="pagination" class="text-center mt-8">
+        <button onclick="loadMore()" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
+            Charger plus
+        </button>
+    </div>
+</div>
 
-        // Thème sombre / clair
-        const themeToggle = document.getElementById("theme-toggle");
-        themeToggle.addEventListener("click", () => {
-            document.documentElement.classList.toggle("dark");
-            localStorage.theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
-            themeToggle.textContent = document.documentElement.classList.contains("dark") ? "☀️ Thème Clair" : "🌙 Thème Sombre";
-        });
-    </script>
+<!-- Scripts -->
+<script>
+    // Toggle Animation
+    function toggleFolder(folderId) {
+        const folderContent = document.getElementById(folderId);
+        folderContent.classList.toggle('hidden');
+    }
+
+    // Notifications Toast
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3500);
+    }
+
+    // Progression de Téléchargement
+    function updateProgress() {
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        progressContainer.classList.remove('hidden');
+        let width = 0;
+        const interval = setInterval(() => {
+            width += 20;
+            progressBar.style.width = width + '%';
+            if (width >= 100) clearInterval(interval);
+        }, 500);
+    }
+
+    // Simuler Progression et Toast après soumission du formulaire
+    document.querySelector("form").addEventListener("submit", (e) => {
+        showToast("Téléchargement en cours...");
+        updateProgress();
+    });
+
+    // Pagination - Simuler le Scroll Infini
+    function loadMore() {
+        const newContent = `
+        <div class="bg-white rounded-lg shadow-lg mb-6 p-4">
+            <p class="text-center text-gray-500">Contenu supplémentaire chargé...</p>
+        </div>`;
+        document.getElementById('folders').insertAdjacentHTML('beforeend', newContent);
+    }
+</script>
 </body>
 </html>
