@@ -20,15 +20,14 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def create_chrome_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Mode headless (sans interface graphique)
+    chrome_options.add_argument("--headless")  # Mode headless
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.binary_location = "/app/.chrome-for-testing/chrome-linux64/chrome"
-
-    service = Service("/app/.chromedriver/bin/chromedriver")  # Chemin sur Heroku
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    
+    # Initialise ChromeDriver sans spécifier de chemin explicite
+    driver = webdriver.Chrome(options=chrome_options)
     return driver
 
 # Fonction pour générer le JSON
