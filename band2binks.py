@@ -37,13 +37,11 @@ def generate_json(folder_url, output_file):
         driver.quit()
 
 
-def download_music(folder_url, folder_name, download_path):
+def download_music(folder_url, folder_name, download_path, json_path):
     driver = webdriver.Chrome()
     driver.get(folder_url)
-
     try:
-        # Charger les titres depuis le JSON généré précédemment
-        json_path = os.path.join(download_path, f"{folder_name}.json")
+        # Charger les titres des musiques depuis le JSON
         with open(json_path, 'r', encoding='utf-8') as file:
             file_names = json.load(file)
 
@@ -51,38 +49,36 @@ def download_music(folder_url, folder_name, download_path):
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.play_status'))
         )
 
-        if len(file_names) != len(play_buttons):
-            result_queue.put(("error", "Nombre de titres dans le JSON ne correspond pas aux musiques."))
-            return
-
-        # Récupérer l'image de couverture
+        # Récupérer et sauvegarder l'image de couverture
         cover_element = driver.find_element(By.XPATH, '//*[@id="tralbumArt"]/a/img')
         cover_url = cover_element.get_attribute('src')
-        cover_data = requests.get(cover_url).content
+        cover_path = os.path.join(download_path, "cover.jpg")  # Nom de fichier pour l'image
+        with open(cover_path, 'wb') as img_file:
+            img_file.write(requests.get(cover_url).content)
 
         # Télécharger chaque musique
         for index, button in enumerate(play_buttons, start=1):
             driver.execute_script("arguments[0].click();", button)
             time.sleep(2)
-
             audio_element = driver.find_element(By.CSS_SELECTOR, 'audio')
             audio_url = audio_element.get_attribute('src')
             filename = file_names[index-1]['title'] + ".mp3"
             file_path = os.path.join(download_path, filename)
 
-            # Télécharger l'audio
             audio_response = requests.get(audio_url)
             with open(file_path, 'wb') as file:
                 file.write(audio_response.content)
 
-            # Ajouter la cover
-            add_cover_to_mp3(file_path, cover_data)
+            add_cover_to_mp3(file_path, requests.get(cover_url).content)
 
-        result_queue.put(("success", "Tous les fichiers ont été téléchargés avec succès."))
+        # Supprimer le fichier JSON après le téléchargement
+        os.remove(json_path)
+
     except Exception as e:
-        result_queue.put(("error", f"Erreur lors du téléchargement : {e}"))
+        print(f"Erreur téléchargement : {e}")
     finally:
         driver.quit()
+
 
 
 def add_cover_to_mp3(file_path, cover_data):
